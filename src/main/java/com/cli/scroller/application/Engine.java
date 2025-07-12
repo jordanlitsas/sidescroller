@@ -65,14 +65,19 @@ public class Engine {
 
         final int targetFps = 60;
         final long frameDurationNs = 1_000_000_000 / targetFps; // in nanoseconds
-
+        boolean refresh = true;
         while (true) {
             long frameStart = System.nanoTime();
 
-            refreshScreen();
+            if (refresh) {
+                refreshScreen();
+            }
             if (!queue.isEmpty()) {
                 inputHandler.enactInput();
                 queue.remove(0);
+                refresh = true;
+            } else {
+                refresh = false;
             }
             long frameTime = System.nanoTime() - frameStart;
 
@@ -123,7 +128,6 @@ public class Engine {
     }
 
     public static void readInput(int input) {
-//        return  MOVEMENT_MAP.get(input);
         if (MOVEMENT_MAP.containsKey(input)) {
             Action action = MOVEMENT_MAP.get(input);
             if (action == Action.JUMP) {
@@ -137,10 +141,9 @@ public class Engine {
                 queue.add(Action.DROP);
             } else {
                 if (queue.size() > 0 && (action == Action.MOVE_LEFT || action == Action.MOVE_RIGHT)) {
-                    queue.set(0, MOVEMENT_MAP.get(input));
+                    queue.set(0, action);
                 } else {
-                    queue.add(MOVEMENT_MAP.get(input));
-
+                    queue.add(action);
                 }
             }
 
