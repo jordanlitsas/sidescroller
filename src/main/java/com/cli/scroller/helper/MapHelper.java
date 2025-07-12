@@ -7,8 +7,15 @@ import com.cli.scroller.models.textures.*;
 import java.util.ArrayList;
 
 import static com.cli.scroller.application.Engine.board;
+import static com.cli.scroller.application.Engine.getPlayerLocation;
 
 public class MapHelper {
+
+    public static Tile getTileBelowPlayer() {
+        int[] playerLocation = getPlayerLocation();
+        return  board.get(playerLocation[0] + 1).get(playerLocation[1]);
+
+    }
 
     public static Tile getTileAtCoordinate(int row, int col) {
         return board.get(row).get(col);

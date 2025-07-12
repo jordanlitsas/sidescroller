@@ -18,7 +18,7 @@ public class Engine {
     public static ArrayList<ArrayList<Tile>> board = new ArrayList<ArrayList<Tile>>();
     public static ArrayList<Action> queue = new ArrayList<>();
     private final InputHandler inputHandler;
-
+    private PhysicsEngine physicsEngine;
     public Engine(String startingLevel) {
         String path = "maps/" + startingLevel + ".txt";
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(path);
@@ -51,6 +51,7 @@ public class Engine {
         }
         setPlayerInStartingPos();
         this.inputHandler = new InputHandler(new MoveHelper());
+        this.physicsEngine = new PhysicsEngine();
     }
 
     private void setPlayerInStartingPos() {
@@ -58,7 +59,7 @@ public class Engine {
     }
 
 
-    public void run() throws IOException {
+    public void run() throws Exception {
         KeyListener keyListener = new KeyListener();
         Thread keyListenderThread = new Thread(keyListener);
         keyListenderThread.start();
@@ -68,6 +69,10 @@ public class Engine {
         boolean refresh = true;
         while (true) {
             long frameStart = System.nanoTime();
+            if (physicsEngine.gravity()) {
+                refreshScreen();
+                refresh = false;
+            }
 
             if (refresh) {
                 refreshScreen();
@@ -79,6 +84,7 @@ public class Engine {
             } else {
                 refresh = false;
             }
+//            physicsEngine.gravity();
             long frameTime = System.nanoTime() - frameStart;
 
             long sleepTime = (frameDurationNs - frameTime) / 1_000_000; // convert to ms
@@ -135,10 +141,7 @@ public class Engine {
                 queue.add(Action.JUMP);
                 queue.add(Action.JUMP);
                 queue.add(Action.JUMP);
-                queue.add(Action.DROP);
-                queue.add(Action.DROP);
-                queue.add(Action.DROP);
-                queue.add(Action.DROP);
+                queue.add(Action.JUMP);
             } else {
                 if (queue.size() > 0 && (action == Action.MOVE_LEFT || action == Action.MOVE_RIGHT)) {
                     queue.set(0, action);
@@ -146,7 +149,6 @@ public class Engine {
                     queue.add(action);
                 }
             }
-
         }
     }
 
