@@ -59,23 +59,31 @@ public class Engine {
 
 
     public void run() throws IOException {
-        KeyListener keyListener = new KeyListener();
-        Thread keyListenderThread = new Thread(keyListener);
-        keyListenderThread.start();
+        Terminal terminal = TerminalBuilder.builder()
+                .jna(true)  // enables native mode (required for unbuffered input)
+                .system(true)
+                .build();
 
         final int targetFps = 60;
         final long frameDurationNs = 1_000_000_000 / targetFps; // in nanoseconds
 
         while (true) {
             long frameStart = System.nanoTime();
-
             refreshScreen();
             if (!queue.isEmpty()) {
                 inputHandler.enactInput();
                 queue.remove(0);
             }
+            else {
+                readInput(terminal.reader().read());
+            }
+
+            terminal.flush();
+
+            // Time spent this frame
             long frameTime = System.nanoTime() - frameStart;
 
+            // Sleep for the remaining time to maintain consistent frame rate
             long sleepTime = (frameDurationNs - frameTime) / 1_000_000; // convert to ms
 
             if (sleepTime > 0) {
@@ -83,7 +91,7 @@ public class Engine {
                     Thread.sleep(sleepTime);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    break;
+                    break; // exit loop if interrupted
                 }
             }
         }
@@ -122,7 +130,7 @@ public class Engine {
         }
     }
 
-    public static void readInput(int input) {
+    private void readInput(int input) {
 //        return  MOVEMENT_MAP.get(input);
         if (MOVEMENT_MAP.containsKey(input)) {
             Action action = MOVEMENT_MAP.get(input);
