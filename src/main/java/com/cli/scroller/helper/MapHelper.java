@@ -1,36 +1,42 @@
 package com.cli.scroller.helper;
 
+import com.cli.scroller.application.InventoryHandler;
 import com.cli.scroller.models.tiles.Tile;
 import com.cli.scroller.models.tiles.TileType;
 import com.cli.scroller.models.textures.*;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
-import static com.cli.scroller.application.Engine.board;
-import static com.cli.scroller.application.Engine.getPlayerLocation;
+import static com.cli.scroller.application.Engine.*;
+import static com.cli.scroller.helper.PrintHelper.getInventoryItemName;
+import static com.cli.scroller.helper.PrintHelper.print;
 
 public class MapHelper {
 
-    public static boolean playerIsTouchingCoin() throws Exception {
+    public static void playerIsTouchingCoin() throws Exception {
         Tile tile = getPlayerTile();
         for (Texture texture :  tile.getTextures()) {
            if (texture.getIcon().equals(TileType.COIN.getIcon())) {
                removeTextureAtTile(board.get(tile.getRow()).get(tile.getCol()), TileType.COIN);
-               return true;
+               points++;
            }
         }
-        return false;
     }
 
-    public static boolean playerIsTouchingInventoryItem() throws Exception {
+    public static void playerIsTouchingInventoryItem() throws Exception {
         Tile tile = getPlayerTile();
         for (Texture texture :  tile.getTextures()) {
             if (texture.isInventoryItem() && !textureIsPlayer(texture)) {
-                findAndGetPlayerTexture().addToInventory(texture);
+                PlayerTexture player = findAndGetPlayerTexture();
+                InventoryHandler.setInventoryItemOrder(player, texture);
+                player.addToInventory(texture);
+                if (player.getInventory().size() == 1) {
+                    player.equip(texture);
+                }
                 removeTextureAtTile(tile, TileType.fromIcon(texture.getIcon()));
             }
         }
-        return false;
     }
 
     private static void removeTextureAtTile(Tile tile, TileType tileType) {
@@ -74,7 +80,17 @@ public class MapHelper {
         return texture.getIcon().equals(TileType.PLAYER.getIcon());
     }
 
-
+    public static int[] getPlayerLocation() {
+        for (int row = 0; row < board.size(); row++) {
+            for (int col = 0; col < board.get(row).size(); col++) {
+                if (board.get(row).get(col).getIcon().equals(TileType.PLAYER.getIcon())) {
+                    return new int[]{row, col};
+                }
+            }
+        }
+        print("CANT FIND PLAYER");;
+        return new int[]{};
+    }
 
 
 
@@ -110,6 +126,7 @@ public class MapHelper {
     public static Tile createLandmineTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(LandMineTexture.builder()
+                .id(String.valueOf(UUID.randomUUID()))
                 .icon(TileType.LANDMINE.getIcon())
                 .damage(0)
                 .collision(false)
@@ -126,6 +143,7 @@ public class MapHelper {
     public static Tile createEmptyTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(EmptyTexture.builder()
+                .id(String.valueOf(UUID.randomUUID()))
                 .icon(TileType.EMPTY.getIcon())
                 .damage(0)
                 .collision(false)
@@ -140,6 +158,7 @@ public class MapHelper {
     public static Tile createGroundTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(GroundTexture.builder()
+                .id(String.valueOf(UUID.randomUUID()))
                 .icon(TileType.GROUND.getIcon())
                 .damage(0)
                 .collision(true)
@@ -154,10 +173,12 @@ public class MapHelper {
     public static Tile createPlayerTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(PlayerTexture.builder()
+                .id(String.valueOf(UUID.randomUUID()))
                 .icon(TileType.PLAYER.getIcon())
                 .damage(0)
                 .collision(false)
                 .inventory(new ArrayList<>())
+                .holding(new ArrayList<>())
                 .build());
         return Tile.builder()
                 .row(row)
@@ -169,6 +190,7 @@ public class MapHelper {
     public static Tile createTreeTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(TreeTexture.builder()
+                .id(String.valueOf(UUID.randomUUID()))
                 .icon(TileType.TREE.getIcon())
                 .damage(0)
                 .collision(true)
@@ -183,6 +205,7 @@ public class MapHelper {
     public static Tile createCoinTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(CoinTexture.builder()
+                .id(String.valueOf(UUID.randomUUID()))
                 .icon(TileType.COIN.getIcon())
                 .damage(0)
                 .collision(false)

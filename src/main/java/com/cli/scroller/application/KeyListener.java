@@ -5,18 +5,19 @@ import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
 
-import static com.cli.scroller.application.Engine.readInput;
+import static com.cli.scroller.application.InputHandler.readInput;
+import static com.cli.scroller.helper.PrintHelper.print;
 
 public class KeyListener  implements  Runnable{
     private volatile boolean running = true;
 
     @Override
     public void run() {
-        System.out.println("Background thread is running...");
+//        print("Background thread is running...");
         Terminal terminal = null;
         try {
             terminal = TerminalBuilder.builder()
-                    .jna(true)  // enables native mode (required for unbuffered input)
+                    .jna(true)
                     .system(true)
                     .build();
         } catch (IOException e) {
@@ -29,7 +30,7 @@ public class KeyListener  implements  Runnable{
                 throw new RuntimeException(e);
             }
         }
-        System.out.println("Background thread has stopped.");
+//        print("Background thread has stopped.");
     }
 
     public void stop() {

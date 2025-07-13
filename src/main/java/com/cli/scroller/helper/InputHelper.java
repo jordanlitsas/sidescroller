@@ -20,5 +20,12 @@ public class InputHelper {
         MOVEMENT_MAP = Collections.unmodifiableMap(map);
     }
 
+    public static final Map<Integer, Action> INTERACT_MAP;
+    static {
+        Map<Integer, Action> map = new HashMap<>();
+        map.put(32, CHANGE_EQUIPPED);
+        INTERACT_MAP = Collections.unmodifiableMap(map);
+    }
+
 
 }

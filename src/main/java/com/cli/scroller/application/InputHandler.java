@@ -6,10 +6,12 @@ import com.cli.scroller.models.tiles.Tile;
 import com.cli.scroller.models.textures.Texture;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
+import java.util.Objects;
 
 import static com.cli.scroller.application.Engine.*;
+import static com.cli.scroller.helper.InputHelper.INTERACT_MAP;
 import static com.cli.scroller.helper.InputHelper.MOVEMENT_MAP;
+import static com.cli.scroller.helper.MapHelper.getPlayerLocation;
 import static com.cli.scroller.helper.MapHelper.getTileAtCoordinate;
 
 //@RequiredArgsConstructor
@@ -17,22 +19,31 @@ import static com.cli.scroller.helper.MapHelper.getTileAtCoordinate;
 public class InputHandler {
 
     private final MoveHelper moveHelper;
+    private final InventoryHandler inventoryHandler;
 
-    public void enactInput() {
-        int[] playerLocation = getPlayerLocation();
-        if (playerLocation.length == 0) {
-            System.out.println("CANT FIND PLAYER");
-            return;
-        }
-        if (MOVEMENT_MAP.containsValue(queue.get(0))) {
-            movePlayer(queue.get(0), playerLocation);
+    public void handleMovement() {
+        if (MOVEMENT_MAP.containsValue(movementQueue.get(0))) {
+            movePlayer(movementQueue.get(0));
         }
     }
 
-    private void movePlayer(Action action, int[] playerLocation) {
+    public void handleInteraction() {
+        if (INTERACT_MAP.containsValue(interactQueue.get(0))) {
+            doInteraction(interactQueue.get(0));
+        }
+    }
+
+    private void doInteraction(Action action) {
+        if (Objects.requireNonNull(action) == Action.CHANGE_EQUIPPED) {
+            inventoryHandler.changeEquipped();
+        }
+    }
+
+    private void movePlayer(Action action) {
+        int[] playerLocation = getPlayerLocation();
         try {
             Texture player = board.get(playerLocation[0]).get(playerLocation[1]).getPlayer();
-            if (checkCollision(action, playerLocation, player)) {
+            if (checkCollision(action, playerLocation)) {
                 return;
             }
             if (Action.JUMP.equals(action)) {
@@ -53,7 +64,7 @@ public class InputHandler {
         }
     }
 
-    private boolean checkCollision(Action action, int[] playerLocation, Texture player) {
+    private boolean checkCollision(Action action, int[] playerLocation) {
         switch(action) {
             case MOVE_RIGHT -> {
                 Tile adjacentTile = getTileAtCoordinate(playerLocation[0], playerLocation[1] + 1);
@@ -77,23 +88,26 @@ public class InputHandler {
     }
 
 
-    public void handleInput(Action action) {
-        if (action == Action.JUMP) {
-            queue.add(Action.JUMP);
-            queue.add(Action.JUMP);
-            queue.add(Action.JUMP);
-            queue.add(Action.DROP);
-            queue.add(Action.DROP);
-            queue.add(Action.DROP);
-        } else {
-            queue.add(action);
+    public static void readInput(int input) {
+        if (MOVEMENT_MAP.containsKey(input)) {
+            Action action = MOVEMENT_MAP.get(input);
+            if (action == Action.JUMP) {
+                movementQueue.add(Action.JUMP);
+                movementQueue.add(Action.JUMP);
+                movementQueue.add(Action.JUMP);
+                movementQueue.add(Action.JUMP);
+                movementQueue.add(Action.JUMP);
+            } else if (movementQueue.size() > 0 && (action == Action.MOVE_LEFT || action == Action.MOVE_RIGHT)) {
+                movementQueue.set(0, action);
+            } else {
+                movementQueue.add(action);
+            }
         }
+        if (INTERACT_MAP.containsKey(input)) {
+            Action action = INTERACT_MAP.get(input);
+            interactQueue.add(action);
+        }
+
     }
 
-    public void detectInAirLateralInput(Action action) {
-        if(action == Action.MOVE_LEFT || action == Action.MOVE_RIGHT) {
-            queue.add(0, action);
-        }
-
-    }
 }

@@ -2,25 +2,31 @@ package com.cli.scroller.application;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 import com.cli.scroller.helper.MapHelper;
 import com.cli.scroller.helper.MoveHelper;
+import com.cli.scroller.helper.PrintHelper;
 import com.cli.scroller.models.actions.Action;
+import com.cli.scroller.models.textures.InventoryTexture;
 import com.cli.scroller.models.textures.PlayerTexture;
 import com.cli.scroller.models.textures.Texture;
 import com.cli.scroller.models.tiles.Tile;
-import com.cli.scroller.models.tiles.TileType;
+import org.apache.commons.collections4.CollectionUtils;
 
-import static com.cli.scroller.helper.InputHelper.MOVEMENT_MAP;
 import static com.cli.scroller.helper.MapHelper.*;
+import static com.cli.scroller.helper.PrintHelper.RESET;
+import static com.cli.scroller.helper.PrintHelper.YELLOW;
 
 //@ShellComponent
 public class Engine {
     public static ArrayList<ArrayList<Tile>> board = new ArrayList<ArrayList<Tile>>();
-    public static ArrayList<Action> queue = new ArrayList<>();
+    public static ArrayList<Action> movementQueue = new ArrayList<>();
+    public static ArrayList<Action> interactQueue = new ArrayList<>();
     private final InputHandler inputHandler;
-    private PhysicsEngine physicsEngine;
-    private static int points = 0;
+    private final PhysicsEngine physicsEngine;
+    public static int points = 0;
 
     public Engine(String startingLevel) {
         String path = "maps/" + startingLevel + ".txt";
@@ -53,7 +59,7 @@ public class Engine {
             e.printStackTrace();
         }
         setPlayerInStartingPos();
-        this.inputHandler = new InputHandler(new MoveHelper());
+        this.inputHandler = new InputHandler(new MoveHelper(), new InventoryHandler());
         this.physicsEngine = new PhysicsEngine();
     }
 
@@ -63,113 +69,127 @@ public class Engine {
 
 
     public void run() throws Exception {
-        KeyListener keyListener = new KeyListener();
-        Thread keyListenderThread = new Thread(keyListener);
-        keyListenderThread.start();
-
+        Thread keyListenerThread = new Thread(new KeyListener());
+        keyListenerThread.start();
+        System.out.print("\033[2J"); // Clear full screen once
         final int targetFps = 60;
-        final long frameDurationNs = 1_000_000_000 / targetFps; // in nanoseconds
-        boolean refresh = true;
+        final long frameDurationNs = 1_000_000_000 / targetFps;
+        refreshScreen();
         while (true) {
             long frameStart = System.nanoTime();
+
+            boolean refreshed = false;
+
             if (physicsEngine.gravity()) {
                 refreshScreen();
-                refresh = false;
+                refreshed = true;
             }
-            playerIsTouchingInventoryItem();
-            if (playerIsTouchingCoin()) {
-                points++;
-            }
-            if (refresh) {
+
+            handleMapInteractions();
+
+            if (!movementQueue.isEmpty()) {
+                inputHandler.handleMovement();
+                movementQueue.remove(0);
                 refreshScreen();
+                refreshed = true;
             }
-            if (!queue.isEmpty()) {
-                inputHandler.enactInput();
-                queue.remove(0);
-                refresh = true;
-            } else {
-                refresh = false;
-            }
-            long frameTime = System.nanoTime() - frameStart;
 
-            long sleepTime = (frameDurationNs - frameTime) / 1_000_000; // convert to ms
-
-            if (sleepTime > 0) {
-                try {
-                    Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
+            if (!interactQueue.isEmpty()) {
+                inputHandler.handleInteraction();
+                interactQueue.remove(0);
+                refreshScreen();
+                refreshed = true;
             }
+            sleepRemainingFrameTime(frameStart);
         }
+    }
+
+    private void handleMapInteractions() throws Exception {
+        playerIsTouchingInventoryItem();
+        playerIsTouchingCoin();
     }
 
     public static void refreshScreen() {
-        clearScreen();
         printScreen();
+
     }
 
 
-    public static int[] getPlayerLocation() {
-        for (int row = 0; row < board.size(); row++) {
-            for (int col = 0; col < board.get(row).size(); col++) {
-                if (board.get(row).get(col).getIcon().equals(TileType.PLAYER.getIcon())) {
-                    return new int[]{row, col};
-                }
-            }
-        }
-        return new int[]{};
-    }
-
-    private static void clearScreen() {
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
-    }
 
     private static void printScreen() {
+        StringBuilder screenBuffer = new StringBuilder();
         int[] playerLocation = getPlayerLocation();
-        for (ArrayList<Tile> row : board) {
-            StringBuilder line = new StringBuilder();
-            for (int i = playerLocation[1] - 50; i < playerLocation[1] + 50; i++) {
-                line.append(row.get(i).getTexture().print());
-            }
-            System.out.println(line);
-        }
-        System.out.println("Points: " + points);
-        StringBuilder inventory = new StringBuilder();
-            for (Texture texture : getPlayerTile().getTextures()) {
-                if (texture instanceof PlayerTexture player) {
-                    if (player.getInventory() != null) {
-                        for (Texture item : player.getInventory()) {
-                            inventory.append(item.getClass().getSimpleName());
-                        }
-                    }
 
+        for (ArrayList<Tile> row : board) {
+            for (int i = playerLocation[1] - 50; i < playerLocation[1] + 50; i++) {
+                screenBuffer.append(row.get(i).getTexture().print());
+            }
+            screenBuffer.append("\n");
+        }
+
+        screenBuffer.append("Points: ").append(points).append("\n");
+
+        StringBuilder inventory = new StringBuilder();
+        PlayerTexture player = findAndGetPlayerTexture();
+        if (!CollectionUtils.isEmpty(player.getInventory())) {
+            // Sort inventory items by inventoryOrder
+            List<Texture> sortedInventory = new ArrayList<>(player.getInventory());
+            sortedInventory.sort(Comparator.comparingInt(item -> {
+                if (item instanceof InventoryTexture) {
+                    return ((InventoryTexture) item).getInventoryOrder();
+                }
+                return Integer.MAX_VALUE; // Fallback for non-inventory items
+            }));
+
+            for (Texture item : sortedInventory) {
+                if (player.getHolding().get(0).getId().equals(item.getId())) {
+                    inventory.append(YELLOW)
+                            .append(PrintHelper.getInventoryItemName(item))
+                            .append(RESET)
+                            .append(" ");
+                } else {
+                    inventory.append(PrintHelper.getInventoryItemName(item)).append(" ");
                 }
             }
+        }
+//        if (!CollectionUtils.isEmpty(player.getInventory())) {
+//            for (Texture item : player.getInventory()) {
+//                if (player.getHolding().get(0).getId().equals(item.getId())) {
+//                    inventory.append(YELLOW).append(PrintHelper.getInventoryItemName(item)).append(RESET).append(" ");
+//                } else {
+//                    inventory.append(PrintHelper.getInventoryItemName(item)).append(" ");
+//                }
+//            }
+//        }
+//        StringBuilder equiped = new StringBuilder();
+//        if (!CollectionUtils.isEmpty(player.getHolding())) {
+//            for (Texture item : player.getHolding()) {
+//                equiped.append(PrintHelper.getInventoryItemName(item)).append(" ");
+//            }
+//        }
 
+        screenBuffer.append("Inventory: ").append(inventory).append("\n");
+//        screenBuffer.append("Equiped: ").append(YELLOW).append(equiped).append(RESET).append("\n");
 
-        System.out.println("Inventory: " + inventory);
+        // Now flush the entire frame in one call
+        System.out.print("\033[H"); // Move cursor to top-left
+        System.out.print(screenBuffer);
     }
 
-    public static void readInput(int input) {
-        if (MOVEMENT_MAP.containsKey(input)) {
-            Action action = MOVEMENT_MAP.get(input);
-            if (action == Action.JUMP) {
-                queue.add(Action.JUMP);
-                queue.add(Action.JUMP);
-                queue.add(Action.JUMP);
-                queue.add(Action.JUMP);
-                queue.add(Action.JUMP);
-            } else if (queue.size() > 0 && (action == Action.MOVE_LEFT || action == Action.MOVE_RIGHT)) {
-                queue.set(0, action);
-            } else {
-                queue.add(action);
+
+    private void sleepRemainingFrameTime(long frameStart) {
+        long elapsedTime = System.nanoTime() - frameStart;
+        long sleepTimeMs = ((long) 16666666 - elapsedTime) / 1_000_000;
+
+        if (sleepTimeMs > 0) {
+            try {
+                Thread.sleep(sleepTimeMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
-
     }
+
 
 
 }

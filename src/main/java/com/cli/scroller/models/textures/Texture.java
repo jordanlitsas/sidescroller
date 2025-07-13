@@ -8,10 +8,11 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 public abstract class Texture {
+    String id;
     String icon;
     boolean collision;
     int damage;
-    boolean inventoryItem;
+    private boolean inventoryItem;
     public abstract String print();
     public abstract void addToInventory(Texture texture);
 }

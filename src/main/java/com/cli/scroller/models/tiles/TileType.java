@@ -10,7 +10,7 @@ public enum TileType {
     EMPTY(" "),
     TREE("|"),
     COIN("$"),
-    LANDMINE("M");
+    LANDMINE("m");
 
     private final String icon;
 

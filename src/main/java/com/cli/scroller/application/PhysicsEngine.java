@@ -2,10 +2,7 @@ package com.cli.scroller.application;
 
 import com.cli.scroller.helper.MoveHelper;
 import com.cli.scroller.models.actions.Action;
-import com.cli.scroller.models.tiles.Tile;
 import lombok.RequiredArgsConstructor;
-
-import java.util.HashSet;
 
 import static com.cli.scroller.application.Engine.*;
 import static com.cli.scroller.helper.MapHelper.*;
@@ -15,7 +12,7 @@ public class PhysicsEngine {
 
     private MoveHelper moveHelper = new MoveHelper();
     public boolean gravity() throws Exception {
-        if ((queue.isEmpty() || queue.get(0) != Action.JUMP) && !getTileBelowPlayer().getTexture().isCollision()) {
+        if ((movementQueue.isEmpty() || movementQueue.get(0) != Action.JUMP) && !getTileBelowPlayer().getTexture().isCollision()) {
             int[] playerLocation = getPlayerLocation();
             moveHelper.playerDrop(playerLocation, board, board.get(playerLocation[0]).get(playerLocation[1]).getPlayer());
             return true;
