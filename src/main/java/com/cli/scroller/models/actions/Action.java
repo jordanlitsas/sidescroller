@@ -5,5 +5,7 @@ public enum Action {
     MOVE_LEFT,
     JUMP,
     DROP,
-    CHANGE_EQUIPPED
+    CHANGE_EQUIPPED,
+    USE_EQUIPPED,
+    DUMP
 }

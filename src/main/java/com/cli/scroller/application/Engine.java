@@ -13,6 +13,7 @@ import com.cli.scroller.models.textures.InventoryTexture;
 import com.cli.scroller.models.textures.PlayerTexture;
 import com.cli.scroller.models.textures.Texture;
 import com.cli.scroller.models.tiles.Tile;
+import com.google.gson.Gson;
 import org.apache.commons.collections4.CollectionUtils;
 
 import static com.cli.scroller.helper.MapHelper.*;
@@ -86,20 +87,25 @@ public class Engine {
             }
 
             handleMapInteractions();
-
+            boolean refresh = false;
             if (!movementQueue.isEmpty()) {
                 inputHandler.handleMovement();
                 movementQueue.remove(0);
-                refreshScreen();
-                refreshed = true;
+//                refreshScreen();
+                refresh = true;
             }
 
             if (!interactQueue.isEmpty()) {
                 inputHandler.handleInteraction();
                 interactQueue.remove(0);
-                refreshScreen();
-                refreshed = true;
+//                refreshScreen();
+                refresh = true;
             }
+            if (refresh) {
+                refreshScreen();
+
+            }
+
             sleepRemainingFrameTime(frameStart);
         }
     }
@@ -142,7 +148,7 @@ public class Engine {
             }));
 
             for (Texture item : sortedInventory) {
-                if (player.getHolding().get(0).getId().equals(item.getId())) {
+                if (CollectionUtils.isNotEmpty(player.getHolding()) && player.getHolding().get(0).getId().equals(item.getId())) {
                     inventory.append(YELLOW)
                             .append(PrintHelper.getInventoryItemName(item))
                             .append(RESET)
@@ -152,26 +158,9 @@ public class Engine {
                 }
             }
         }
-//        if (!CollectionUtils.isEmpty(player.getInventory())) {
-//            for (Texture item : player.getInventory()) {
-//                if (player.getHolding().get(0).getId().equals(item.getId())) {
-//                    inventory.append(YELLOW).append(PrintHelper.getInventoryItemName(item)).append(RESET).append(" ");
-//                } else {
-//                    inventory.append(PrintHelper.getInventoryItemName(item)).append(" ");
-//                }
-//            }
-//        }
-//        StringBuilder equiped = new StringBuilder();
-//        if (!CollectionUtils.isEmpty(player.getHolding())) {
-//            for (Texture item : player.getHolding()) {
-//                equiped.append(PrintHelper.getInventoryItemName(item)).append(" ");
-//            }
-//        }
-
         screenBuffer.append("Inventory: ").append(inventory).append("\n");
-//        screenBuffer.append("Equiped: ").append(YELLOW).append(equiped).append(RESET).append("\n");
+//        screenBuffer.append("print player hash: ").append(System.identityHashCode(findAndGetPlayerTexture())).append("\n");
 
-        // Now flush the entire frame in one call
         System.out.print("\033[H"); // Move cursor to top-left
         System.out.print(screenBuffer);
     }
@@ -189,7 +178,6 @@ public class Engine {
             }
         }
     }
-
 
 
 }

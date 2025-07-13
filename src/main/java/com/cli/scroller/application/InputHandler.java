@@ -4,6 +4,8 @@ import com.cli.scroller.helper.MoveHelper;
 import com.cli.scroller.models.actions.Action;
 import com.cli.scroller.models.tiles.Tile;
 import com.cli.scroller.models.textures.Texture;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Objects;
@@ -11,8 +13,8 @@ import java.util.Objects;
 import static com.cli.scroller.application.Engine.*;
 import static com.cli.scroller.helper.InputHelper.INTERACT_MAP;
 import static com.cli.scroller.helper.InputHelper.MOVEMENT_MAP;
-import static com.cli.scroller.helper.MapHelper.getPlayerLocation;
-import static com.cli.scroller.helper.MapHelper.getTileAtCoordinate;
+import static com.cli.scroller.helper.MapHelper.*;
+import static com.cli.scroller.helper.MapHelper.findAndGetPlayerTexture;
 
 //@RequiredArgsConstructor
 @RequiredArgsConstructor
@@ -37,6 +39,18 @@ public class InputHandler {
         if (Objects.requireNonNull(action) == Action.CHANGE_EQUIPPED) {
             inventoryHandler.changeEquipped();
         }
+        if (Objects.requireNonNull(action) == Action.USE_EQUIPPED) {
+            inventoryHandler.useEquipped();
+        }
+//        if (Objects.requireNonNull(action) == Action.DUMP) {
+//            Gson gson = new GsonBuilder()
+//                    .setPrettyPrinting()
+//                    .create();
+//
+//            String json = gson.toJson(findAndGetPlayerTexture().getInventory());
+//            System.out.println("\n\n");
+//            System.out.println(json);
+//        }
     }
 
     private void movePlayer(Action action) {

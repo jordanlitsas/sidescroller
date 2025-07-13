@@ -18,4 +18,9 @@ public class GroundTexture extends Texture {
 
     @Override
     public void addToInventory(Texture texture) {}
+
+    @Override
+    public Texture copy() {
+        return null;
+    }
 }

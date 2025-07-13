@@ -25,19 +25,35 @@ public class MapHelper {
     }
 
     public static void playerIsTouchingInventoryItem() throws Exception {
-        Tile tile = getPlayerTile();
-        for (Texture texture :  tile.getTextures()) {
+                Tile tile = getPlayerTile();
+        for (Texture texture : tile.getTextures()) {
             if (texture.isInventoryItem() && !textureIsPlayer(texture)) {
                 PlayerTexture player = findAndGetPlayerTexture();
-                InventoryHandler.setInventoryItemOrder(player, texture);
-                player.addToInventory(texture);
+                Texture copy = texture.copy(); // ⬅️ create a new instance
+                InventoryHandler.setInventoryItemOrder(player, copy);
+                player.addToInventory(copy);
                 if (player.getInventory().size() == 1) {
-                    player.equip(texture);
+                    player.equip(copy);
                 }
                 removeTextureAtTile(tile, TileType.fromIcon(texture.getIcon()));
             }
         }
+
     }
+//    public static void playerIsTouchingInventoryItem() throws Exception {
+//        Tile tile = getPlayerTile();
+//        for (Texture texture :  tile.getTextures()) {
+//            if (texture.isInventoryItem() && !textureIsPlayer(texture)) {
+//                PlayerTexture player = findAndGetPlayerTexture();
+//                InventoryHandler.setInventoryItemOrder(player, texture);
+//                player.addToInventory(texture);
+//                if (player.getInventory().size() == 1) {
+//                    player.equip(texture);
+//                }
+//                removeTextureAtTile(tile, TileType.fromIcon(texture.getIcon()));
+//            }
+//        }
+//    }
 
     private static void removeTextureAtTile(Tile tile, TileType tileType) {
         for (int i = 0; i < tile.getTextures().size(); i++) {
