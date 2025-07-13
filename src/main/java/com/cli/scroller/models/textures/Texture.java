@@ -11,5 +11,7 @@ public abstract class Texture {
     String icon;
     boolean collision;
     int damage;
+    boolean inventoryItem;
     public abstract String print();
+    public abstract void addToInventory(Texture texture);
 }

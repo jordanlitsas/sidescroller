@@ -4,5 +4,6 @@ public enum Action {
     MOVE_RIGHT,
     MOVE_LEFT,
     JUMP,
-    DROP
+    DROP,
+    LANDMINE
 }

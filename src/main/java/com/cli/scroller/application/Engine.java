@@ -6,12 +6,13 @@ import java.util.ArrayList;
 import com.cli.scroller.helper.MapHelper;
 import com.cli.scroller.helper.MoveHelper;
 import com.cli.scroller.models.actions.Action;
+import com.cli.scroller.models.textures.PlayerTexture;
+import com.cli.scroller.models.textures.Texture;
 import com.cli.scroller.models.tiles.Tile;
 import com.cli.scroller.models.tiles.TileType;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
 
 import static com.cli.scroller.helper.InputHelper.MOVEMENT_MAP;
+import static com.cli.scroller.helper.MapHelper.*;
 
 //@ShellComponent
 public class Engine {
@@ -19,6 +20,8 @@ public class Engine {
     public static ArrayList<Action> queue = new ArrayList<>();
     private final InputHandler inputHandler;
     private PhysicsEngine physicsEngine;
+    private static int points = 0;
+
     public Engine(String startingLevel) {
         String path = "maps/" + startingLevel + ".txt";
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(path);
@@ -36,10 +39,10 @@ public class Engine {
 
                 for (int col = 0; col < line.length(); col++) {
                     char c = line.charAt(col);
+                    if (c == 'M') {
+                        String s = "";
+                    }
                     rowList.add(MapHelper.getTileWithTypeAndCoordinates(c, row, col));
-
-                    // Example: Log coordinates and character
-                    // System.out.printf("Character '%c' at row %d, column %d%n", c, row, col);
                 }
 
                 board.add(rowList);
@@ -55,7 +58,7 @@ public class Engine {
     }
 
     private void setPlayerInStartingPos() {
-        board.get(9).get(51).addPlayer(MapHelper.getPlayerTile(9, 51).getTexture());
+        board.get(9).get(51).addPlayer(MapHelper.createPlayerTile(9, 51).getTexture());
     }
 
 
@@ -73,7 +76,10 @@ public class Engine {
                 refreshScreen();
                 refresh = false;
             }
-
+            playerIsTouchingInventoryItem();
+            if (playerIsTouchingCoin()) {
+                points++;
+            }
             if (refresh) {
                 refreshScreen();
             }
@@ -84,7 +90,6 @@ public class Engine {
             } else {
                 refresh = false;
             }
-//            physicsEngine.gravity();
             long frameTime = System.nanoTime() - frameStart;
 
             long sleepTime = (frameDurationNs - frameTime) / 1_000_000; // convert to ms
@@ -110,11 +115,11 @@ public class Engine {
         for (int row = 0; row < board.size(); row++) {
             for (int col = 0; col < board.get(row).size(); col++) {
                 if (board.get(row).get(col).getIcon().equals(TileType.PLAYER.getIcon())) {
-                    return new int[] {row, col};
+                    return new int[]{row, col};
                 }
             }
         }
-        return new int[] {};
+        return new int[]{};
     }
 
     private static void clearScreen() {
@@ -127,10 +132,25 @@ public class Engine {
         for (ArrayList<Tile> row : board) {
             StringBuilder line = new StringBuilder();
             for (int i = playerLocation[1] - 50; i < playerLocation[1] + 50; i++) {
-              line.append(row.get(i).getTexture().print());
+                line.append(row.get(i).getTexture().print());
             }
             System.out.println(line);
         }
+        System.out.println("Points: " + points);
+        StringBuilder inventory = new StringBuilder();
+            for (Texture texture : getPlayerTile().getTextures()) {
+                if (texture instanceof PlayerTexture player) {
+                    if (player.getInventory() != null) {
+                        for (Texture item : player.getInventory()) {
+                            inventory.append(item.getClass().getSimpleName());
+                        }
+                    }
+
+                }
+            }
+
+
+        System.out.println("Inventory: " + inventory);
     }
 
     public static void readInput(int input) {
@@ -142,16 +162,14 @@ public class Engine {
                 queue.add(Action.JUMP);
                 queue.add(Action.JUMP);
                 queue.add(Action.JUMP);
+            } else if (queue.size() > 0 && (action == Action.MOVE_LEFT || action == Action.MOVE_RIGHT)) {
+                queue.set(0, action);
             } else {
-                if (queue.size() > 0 && (action == Action.MOVE_LEFT || action == Action.MOVE_RIGHT)) {
-                    queue.set(0, action);
-                } else {
-                    queue.add(action);
-                }
+                queue.add(action);
             }
         }
-    }
 
+    }
 
 
 }

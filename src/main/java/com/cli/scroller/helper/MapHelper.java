@@ -11,6 +11,38 @@ import static com.cli.scroller.application.Engine.getPlayerLocation;
 
 public class MapHelper {
 
+    public static boolean playerIsTouchingCoin() throws Exception {
+        Tile tile = getPlayerTile();
+        for (Texture texture :  tile.getTextures()) {
+           if (texture.getIcon().equals(TileType.COIN.getIcon())) {
+               removeTextureAtTile(board.get(tile.getRow()).get(tile.getCol()), TileType.COIN);
+               return true;
+           }
+        }
+        return false;
+    }
+
+    public static boolean playerIsTouchingInventoryItem() throws Exception {
+        Tile tile = getPlayerTile();
+        for (Texture texture :  tile.getTextures()) {
+            if (texture.isInventoryItem() && !textureIsPlayer(texture)) {
+                findAndGetPlayerTexture().addToInventory(texture);
+                removeTextureAtTile(tile, TileType.fromIcon(texture.getIcon()));
+            }
+        }
+        return false;
+    }
+
+    private static void removeTextureAtTile(Tile tile, TileType tileType) {
+        for (int i = 0; i < tile.getTextures().size(); i++) {
+            if (tile.getTextures().get(i).getIcon().equals(tileType.getIcon())) {
+                tile.getTextures().remove(i);
+                tile.getTextures().add(i, createEmptyTile(tile.getRow(), tile.getCol()).getTexture());
+
+            }
+        }
+    }
+
     public static Tile getTileBelowPlayer() {
         int[] playerLocation = getPlayerLocation();
         return  board.get(playerLocation[0] + 1).get(playerLocation[1]);
@@ -21,89 +53,77 @@ public class MapHelper {
         return board.get(row).get(col);
     }
 
+
+    public static PlayerTexture findAndGetPlayerTexture() {
+        int[] playerLocation = getPlayerLocation();
+        for (Texture texture :  board.get(playerLocation[0]).get(playerLocation[1]).getTextures()) {
+            if (texture.getIcon().equals(TileType.PLAYER.getIcon())) {
+                return (PlayerTexture) texture;
+            }
+        }
+        return null;
+    }
+
+    public static Tile getPlayerTile() {
+        int[] playerLocation = getPlayerLocation();
+        return board.get(playerLocation[0]).get(playerLocation[1]);
+
+    }
+
+    public static boolean textureIsPlayer(Texture texture) {
+        return texture.getIcon().equals(TileType.PLAYER.getIcon());
+    }
+
+
+
+
+
+
+
+    // Methods to init the board
     public static Tile getTileWithTypeAndCoordinates(char tile, int row, int col) {
         switch (String.valueOf(tile)) {
             case "+" -> {
-                return getPlayerTile(row, col);
+                return createPlayerTile(row, col);
             }
             case "|" -> {
-                return getTreeTile(row, col);
+                return createTreeTile(row, col);
             }
             case " " -> {
-                return getEmptyTile(row, col);
+                return createEmptyTile(row, col);
             }
             case "." -> {
-                return getGroundTile(row, col);
+                return createGroundTile(row, col);
             }
             case "$" -> {
-                return getCoinTile(row, col);
+                return createCoinTile(row, col);
+            }
+            case "M" -> {
+                return createLandmineTile(row, col);
             }
             default -> {
             }
         }
         return null;
     }
-    public static Tile getEmptyTile() {
+
+    public static Tile createLandmineTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
-        textures.add(EmptyTexture.builder()
-                .icon(TileType.EMPTY.getIcon())
+        textures.add(LandMineTexture.builder()
+                .icon(TileType.LANDMINE.getIcon())
                 .damage(0)
                 .collision(false)
+                .inventoryItem(true)
                 .build());
         return Tile.builder()
+                .row(row)
+                .col(col)
                 .textures(textures)
                 .build();
     }
 
-    public static Tile getGroundTile() {
-        ArrayList<Texture> textures = new ArrayList<>();
-        textures.add(GroundTexture.builder()
-                .icon(TileType.GROUND.getIcon())
-                .damage(0)
-                .collision(true)
-                .build());
-        return Tile.builder()
-                .textures(textures)
-                .build();
-    }
 
-    public static Tile getPlayerTile() {
-        ArrayList<Texture> textures = new ArrayList<>();
-        textures.add(PlayerTexture.builder()
-                .icon(TileType.PLAYER.getIcon())
-                .damage(0)
-                .collision(true)
-                .build());
-        return Tile.builder()
-                .textures(textures)
-                .build();
-    }
-
-    public static Tile getTreeTile() {
-        ArrayList<Texture> textures = new ArrayList<>();
-        textures.add(TreeTexture.builder()
-                .icon(TileType.TREE.getIcon())
-                .damage(0)
-                .collision(false) // todo need to figure out multiple items on tile
-                .build());
-        return Tile.builder()
-                .textures(textures)
-                .build();
-    }
-
-    public static Tile getCoinTile() {
-        ArrayList<Texture> textures = new ArrayList<>();
-        textures.add(CoinTexture.builder()
-                .icon(TileType.COIN.getIcon())
-                .damage(0)
-                .collision(false)
-                .build());
-        return Tile.builder()
-                .textures(textures)
-                .build();
-    }
-
-    public static Tile getEmptyTile(int row, int col) {
+    public static Tile createEmptyTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(EmptyTexture.builder()
                 .icon(TileType.EMPTY.getIcon())
@@ -117,7 +137,7 @@ public class MapHelper {
                 .build();
     }
 
-    public static Tile getGroundTile(int row, int col) {
+    public static Tile createGroundTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(GroundTexture.builder()
                 .icon(TileType.GROUND.getIcon())
@@ -131,12 +151,13 @@ public class MapHelper {
                 .build();
     }
 
-    public static Tile getPlayerTile(int row, int col) {
+    public static Tile createPlayerTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(PlayerTexture.builder()
                 .icon(TileType.PLAYER.getIcon())
                 .damage(0)
                 .collision(false)
+                .inventory(new ArrayList<>())
                 .build());
         return Tile.builder()
                 .row(row)
@@ -145,7 +166,7 @@ public class MapHelper {
                 .build();
     }
 
-    public static Tile getTreeTile(int row, int col) {
+    public static Tile createTreeTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(TreeTexture.builder()
                 .icon(TileType.TREE.getIcon())
@@ -159,7 +180,7 @@ public class MapHelper {
                 .build();
     }
 
-    public static Tile getCoinTile(int row, int col) {
+    public static Tile createCoinTile(int row, int col) {
         ArrayList<Texture> textures = new ArrayList<>();
         textures.add(CoinTexture.builder()
                 .icon(TileType.COIN.getIcon())
@@ -172,5 +193,6 @@ public class MapHelper {
                 .textures(textures)
                 .build();
     }
+
 
 }

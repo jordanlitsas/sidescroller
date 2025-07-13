@@ -16,6 +16,9 @@ public class TreeTexture extends Texture {
     public String print() {
         return GREEN + tileType.getIcon() + RESET;
     }
+
+    @Override
+    public void addToInventory(Texture texture) {}
 //    private boolean collision = false;
 //    private int damage = 0;
 }

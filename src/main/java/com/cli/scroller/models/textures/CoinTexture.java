@@ -15,5 +15,8 @@ public class CoinTexture extends Texture {
     public String print() {
         return YELLOW + tileType.getIcon() + RESET;
     }
+
+    @Override
+    public void addToInventory(Texture texture) {}
 }
 

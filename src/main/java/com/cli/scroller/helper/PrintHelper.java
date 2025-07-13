@@ -11,4 +11,6 @@ public class PrintHelper {
     public static final String CYAN = "\u001B[36m";
     public static final String WHITE = "\u001B[37m";
     public static final String BROWN = "\u001B[0;33m";
+    public static final String BRIGHT_RED = "\u001B[91m";
+
 }

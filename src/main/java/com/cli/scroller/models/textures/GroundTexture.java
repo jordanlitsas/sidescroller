@@ -15,4 +15,7 @@ public class GroundTexture extends Texture {
     public String print() {
         return BROWN + tileType.getIcon() + RESET;
     }
+
+    @Override
+    public void addToInventory(Texture texture) {}
 }
