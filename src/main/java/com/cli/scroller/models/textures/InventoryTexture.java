@@ -20,17 +20,5 @@ public class InventoryTexture extends Texture {
 
     }
 
-    @Override
-    public Texture copy() {
-        return InventoryTexture.builder()
-                .id(this.id)
-                .icon(this.icon)
-                .collision(this.collision)
-                .damage(this.damage)
-                .inventoryItem(this.isInventoryItem())
-                .inventoryOrder(this.inventoryOrder)
-                .build();
-    }
-
 
 }

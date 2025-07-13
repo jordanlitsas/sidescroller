@@ -31,11 +31,6 @@ public class PlayerTexture extends Texture {
         this.inventory.add(texture);
     }
 
-    @Override
-    public Texture copy() {
-        return null;
-    }
-
     public void equip(Texture texture) {
         this.holding.add(texture);
     }

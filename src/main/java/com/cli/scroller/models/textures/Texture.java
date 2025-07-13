@@ -15,6 +15,5 @@ public abstract class Texture {
     private boolean inventoryItem;
     public abstract String print();
     public abstract void addToInventory(Texture texture);
-    public abstract Texture copy();
 
 }
