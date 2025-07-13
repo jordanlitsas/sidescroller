@@ -19,11 +19,4 @@ public class TreeTexture extends Texture {
 
     @Override
     public void addToInventory(Texture texture) {}
-
-    @Override
-    public Texture copy() {
-        return null;
-    }
-//    private boolean collision = false;
-//    private int damage = 0;
 }
