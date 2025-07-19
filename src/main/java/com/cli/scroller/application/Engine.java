@@ -140,7 +140,6 @@ public class Engine {
 
             }
         }
-
         screenBuffer.append("Inventory: ").append(inventory).append("\n");
         screenBuffer.append("Print no. : ").append(printCount).append("\n");
         System.out.print("\033[H"); // Move cursor to top-left
@@ -164,7 +163,4 @@ public class Engine {
     public static void statRefresh() {
         System.out.print("\033[H\033[2J");
     }
-
-
-
 }
