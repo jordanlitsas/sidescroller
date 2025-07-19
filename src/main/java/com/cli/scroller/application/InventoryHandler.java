@@ -6,6 +6,9 @@ import com.cli.scroller.models.textures.PlayerTexture;
 import com.cli.scroller.models.textures.Texture;
 import org.apache.commons.collections4.CollectionUtils;
 
+import java.util.ArrayList;
+
+import static com.cli.scroller.application.Engine.statRefresh;
 import static com.cli.scroller.helper.MapHelper.findAndGetPlayerTexture;
 
 public class InventoryHandler {
@@ -52,24 +55,26 @@ public class InventoryHandler {
     }
 
     private void useLandmine(PlayerTexture player, InventoryTexture equipped) {
+        ArrayList<Texture> newInven = new ArrayList<>();
         for (int i = 0; i < player.getInventory().size(); i++) {
-            if (player.getInventory().get(i).getId().equals(equipped.getId())) {
-                player.getInventory().remove(i);
-//                System.out.println("removed from inv");
+            if (!player.getInventory().get(i).getId().equals(equipped.getId())) {
+                newInven.add(player.getInventory().get(i));
             }
         }
+        ArrayList<Texture> newHolding = new ArrayList<>();
         for (int i = 0; i < player.getHolding().size(); i++) {
             if (player.getHolding().get(i).getId().equals(equipped.getId())) {
                 player.getHolding().remove(i);
-//                System.out.println("removed from eq");
 
             }
         }
-//        System.out.println("useLandmine player hash: " + System.identityHashCode(findAndGetPlayerTexture()));
+        player.setInventory(newInven);
+        if (CollectionUtils.isNotEmpty(player.getInventory())) {
+            newHolding.add(player.getInventory().get(0));
 
-//        player.getHolding().remove(equipped);
-//        player.getInventory().remove(equipped);
-
+        }
+        player.setHolding(newHolding);
+        statRefresh();
     }
 
     public static void setInventoryItemOrder(PlayerTexture player, Texture item) {
