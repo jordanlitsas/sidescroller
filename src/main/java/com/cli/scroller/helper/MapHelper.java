@@ -14,6 +14,10 @@ import static com.cli.scroller.helper.PrintHelper.print;
 
 public class MapHelper {
 
+    public void handleMapInteractions() throws Exception {
+        playerIsTouchingInventoryItem();
+        playerIsTouchingCoin();
+    }
     public static void playerIsTouchingCoin() throws Exception {
         Tile tile = getPlayerTile();
         for (Texture texture :  tile.getTextures()) {

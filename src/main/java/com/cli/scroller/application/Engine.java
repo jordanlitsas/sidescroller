@@ -26,7 +26,9 @@ public class Engine {
     public static ArrayList<Action> interactQueue = new ArrayList<>();
     private final InputHandler inputHandler;
     private final PhysicsEngine physicsEngine;
+    public static boolean refresh = true;
     public static int points = 0;
+    private static int printCount = 0;
 
     public Engine(String startingLevel) {
         String path = "maps/" + startingLevel + ".txt";
@@ -71,34 +73,17 @@ public class Engine {
     public void run() throws Exception {
         Thread keyListenerThread = new Thread(new KeyListener());
         keyListenerThread.start();
+        Thread actionListenerThread = new Thread(new ActionListener());
+        actionListenerThread.start();
         System.out.print("\033[2J"); // Clear full screen once
         final int targetFps = 60;
         final long frameDurationNs = 1_000_000_000 / targetFps;
         refreshScreen();
         while (true) {
             long frameStart = System.nanoTime();
-
-            boolean refreshed = false;
-
-            if (physicsEngine.gravity()) {
+            if (refresh) {
                 refreshScreen();
-                refreshed = true;
-            }
-
-            handleMapInteractions();
-
-            if (!movementQueue.isEmpty()) {
-                inputHandler.handleMovement();
-                movementQueue.remove(0);
-                refreshScreen();
-                refreshed = true;
-            }
-
-            if (!interactQueue.isEmpty()) {
-                inputHandler.handleInteraction();
-                interactQueue.remove(0);
-                refreshScreen();
-                refreshed = true;
+                refresh = false;
             }
             sleepRemainingFrameTime(frameStart);
         }
@@ -117,6 +102,7 @@ public class Engine {
 
 
     private static void printScreen() {
+        printCount++;
         StringBuilder screenBuffer = new StringBuilder();
         int[] playerLocation = getPlayerLocation();
 
@@ -141,37 +127,21 @@ public class Engine {
                 return Integer.MAX_VALUE; // Fallback for non-inventory items
             }));
 
-            for (Texture item : sortedInventory) {
-                if (player.getHolding().get(0).getId().equals(item.getId())) {
-                    inventory.append(YELLOW)
-                            .append(PrintHelper.getInventoryItemName(item))
-                            .append(RESET)
-                            .append(" ");
-                } else {
-                    inventory.append(PrintHelper.getInventoryItemName(item)).append(" ");
+            for (Texture item : player.getInventory()) {
+                if (CollectionUtils.isNotEmpty(player.getHolding())) {
+                    if (player.getHolding().get(0).getId().equals(item.getId())) {
+                        inventory.append(YELLOW).append(PrintHelper.getInventoryItemName(item))
+                                .append(RESET)
+                                .append(" ");
+                    } else {
+                        inventory.append(PrintHelper.getInventoryItemName(item)).append(" ");
+                    }
                 }
+
             }
         }
-//        if (!CollectionUtils.isEmpty(player.getInventory())) {
-//            for (Texture item : player.getInventory()) {
-//                if (player.getHolding().get(0).getId().equals(item.getId())) {
-//                    inventory.append(YELLOW).append(PrintHelper.getInventoryItemName(item)).append(RESET).append(" ");
-//                } else {
-//                    inventory.append(PrintHelper.getInventoryItemName(item)).append(" ");
-//                }
-//            }
-//        }
-//        StringBuilder equiped = new StringBuilder();
-//        if (!CollectionUtils.isEmpty(player.getHolding())) {
-//            for (Texture item : player.getHolding()) {
-//                equiped.append(PrintHelper.getInventoryItemName(item)).append(" ");
-//            }
-//        }
-
         screenBuffer.append("Inventory: ").append(inventory).append("\n");
-//        screenBuffer.append("Equiped: ").append(YELLOW).append(equiped).append(RESET).append("\n");
-
-        // Now flush the entire frame in one call
+        screenBuffer.append("Print no. : ").append(printCount).append("\n");
         System.out.print("\033[H"); // Move cursor to top-left
         System.out.print(screenBuffer);
     }
@@ -190,6 +160,7 @@ public class Engine {
         }
     }
 
-
-
+    public static void statRefresh() {
+        System.out.print("\033[H\033[2J");
+    }
 }
