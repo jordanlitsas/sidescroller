@@ -12,9 +12,10 @@ public class PhysicsEngine {
 
     private MoveHelper moveHelper = new MoveHelper();
     public boolean gravity() throws Exception {
-        if ((movementQueue.isEmpty() || movementQueue.get(0) != Action.JUMP) && !getTileBelowPlayer().getTexture().isCollision()) {
-            int[] playerLocation = getPlayerLocation();
-            moveHelper.playerDrop(playerLocation, board, board.get(playerLocation[0]).get(playerLocation[1]).getPlayer());
+        if (!getTileBelowPlayer().getTexture().isCollision() && (movementQueue.isEmpty() || (movementQueue.get(0).equals(Action.JUMP) && movementQueue.get(0).equals(Action.MOVE_LEFT) && movementQueue.get(0).equals(Action.MOVE_RIGHT)))) {
+//            int[] playerLocation = getPlayerLocation();
+            movementQueue.add(0, Action.DROP);
+//            moveHelper.playerDrop(playerLocation, board, board.get(playerLocation[0]).get(playerLocation[1]).getPlayer());
             return true;
         }
         return false;

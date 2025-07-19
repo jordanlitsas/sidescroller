@@ -26,12 +26,14 @@ public class InputHandler {
     public void handleMovement() {
         if (MOVEMENT_MAP.containsValue(movementQueue.get(0))) {
             movePlayer(movementQueue.get(0));
+            movementQueue.remove(0);
         }
     }
 
     public void handleInteraction() {
         if (INTERACT_MAP.containsValue(interactQueue.get(0))) {
             doInteraction(interactQueue.get(0));
+            interactQueue.remove(0);
         }
     }
 
@@ -109,10 +111,13 @@ public class InputHandler {
                 movementQueue.add(Action.JUMP);
                 movementQueue.add(Action.JUMP);
                 movementQueue.add(Action.JUMP);
-                movementQueue.add(Action.JUMP);
-                movementQueue.add(Action.JUMP);
+//                movementQueue.add(Action.JUMP);
+//                movementQueue.add(Action.JUMP);
             } else if (movementQueue.size() > 0 && (action == Action.MOVE_LEFT || action == Action.MOVE_RIGHT)) {
-                movementQueue.set(0, action);
+                movementQueue.add(0, action);
+                movementQueue.add(0, action);
+                movementQueue.add(0, action);
+
             } else {
                 movementQueue.add(action);
             }
@@ -121,7 +126,7 @@ public class InputHandler {
             Action action = INTERACT_MAP.get(input);
             interactQueue.add(action);
         }
-
+        String s = "input read";
     }
 
 }
